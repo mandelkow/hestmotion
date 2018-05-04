@@ -1,5 +1,5 @@
-function [M,P,Img] = hestmotion(Img,varargin)
-% hEstMotion:**3B1R++: Motion correction for 2D/3D image/volumes (affine trafo)...
+function [M,P,Img,Fig,Par] = hestmotion(Img,varargin)
+% hEstMotion:**3B3R++: Motion correction for 2D/3D image/volumes (affine trafo)...
 %                  using estMotionMulti3() by <david.heeger@nyu.edu>.
 %
 % SYNTAX: [M,P,Img] = hestmotion(Img,[RefImg,]numIiters,Minitial,rotFlag,robustFlag,CB,SC)
@@ -13,7 +13,13 @@ function [M,P,Img] = hestmotion(Img,varargin)
 % M(:,:,n) = Affine trafo matrix for img n
 % P(n,:) = 12 Motion correction parameters (computed from M(:,:,n))
 %          3x translation (XYZ), 3x rotation, 3x scaling, 3x shearing
-% Img = Corrected images
+% Img = Corrected images. To view 2D timeseries side by side use:
+%       implay(hdatrescale(cat(2,dimg,cimg),[0 1]))  
+%
+% NOTE: Apparently, NaNs can be used to mask the reference (or input) image
+% to achieve exclusion of data from computations.
+%
+% NOTE: The coordinate origin and center of rotation is top left corner!
 %
 % NOTE: Large difference in dynamic range between images compared are
 %       disadvantageous. Normalisation may improve results. Also, try
@@ -22,16 +28,19 @@ function [M,P,Img] = hestmotion(Img,varargin)
 % SEE: estMotion2, estMotion3
 
 % AUTH: HM, 07.2012, 3B1: Input Minitial=0/1 to pass M for consec. images.
+%                         Add outputs Fig and Par to suppress display.
 % AUTH: HM, 08.2008, 3B: Replace param. MultiScale with numIters= [1 2 3].
 %                        Display P(0,:), in case of only 1 image.
 % AUTH: HM, 04.2006, 2B: Implement DEFAULT.
 % AUTH: HM, 04.2006, 1B1: BUGFIX: 2D RefImg for 2D correction.
 % AUTH: HM, 02.2005, 1B.
 
-DISP = 1;
+%%
+DISP = 0; % ***
 % [RefImg,numIters,Minitial,rotFlag,robustFlag,CB,SC]
-% DEFAULT = [{Img(:,:,:,1)},{1},{[]},{1},{0},{[]},{[]}];
 DEFAULT = [{Img(:,:,:,1)},{1},{1},{1},{0},{[]},{[]}];
+
+%%
 if isempty(varargin) || length(varargin{1}) < 2, % No RefImg given.
     varargin = [{[]},varargin];
     ImgNo = 2;
@@ -44,16 +53,24 @@ varargin = DEFAULT;
 clear DEFAULT % Why?
 [RefImg,numIters,Minitial,rotFlag,robustFlag,CB,SC] = deal(varargin{:});
 varargin(1) = []; % Remove RefImg.
-if numel(Minitial)==1,
-    varargin{2} = [];
+% Minitial only serves as a flag henceforth.
+if isempty(Minitial), Minitial = 1; % (default) pass M betw images
+elseif numel(Minitial)==1, varargin{2} = [];
 end
-if length(numIters) < 2,
+if nargout < 5,
     disp(cell2struct(varargin,...
         {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2));
 else
-    disp(cell2struct(varargin,...
-        {'Iterations_MultiScale','Minitial','RigidFlag','RobustFlag','CB','SC'},2));
+    Par = cell2struct(varargin,...
+        {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2);
 end
+% if length(numIters) < 2,
+%     disp(cell2struct(varargin,...
+%         {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2));
+% else
+%     disp(cell2struct(varargin,...
+%         {'Iterations_MultiScale','Minitial','RigidFlag','RobustFlag','CB','SC'},2));
+% end
 % Remove trailing empty inputs from varargin.
 while ~isempty(varargin) && isempty(varargin{end}),
     varargin(end) = [];
@@ -96,8 +113,6 @@ for ImgNo=ImgNo:ImgSz(end),
     else
         M(:,:,ImgNo) = feval(FUN,RefImg,Img(:,:,:,ImgNo),varargin{:});
     end;
-    % if numIters > 1, % *** HM! 2012-07 pass Minitial betw. Images?!
-    % Why only with numIters > 1?!
     if Minitial~=0,
         varargin{2} = M(:,:,ImgNo); % = Minitial
     end;
@@ -121,8 +136,8 @@ if DISP || (nargout > 1),
         P(ImgNo,:) = hspm_imatrix(M(:,:,ImgNo));
     end;
 end
-if DISP,
-    figure('name','hestmotion');
+if DISP || (nargout<1) || (nargout<5),
+    Fig = figure('name','hestmotion');
     
 %     subplot(2,1,1);% set(gca,'xlim',[1,size(Img,4)]);
 %     plot(squeeze(M(1:3,end,:))');
@@ -165,8 +180,8 @@ if DISP,
     P(1,:) = []; % Remove extra.
 end;
 
-%%
-if nargout > 2,
+%% Transform images for output
+if nargout > 2 && nargout < 5,
     if Flag2D,
         fprintf('\nTransform %u images... %5u',size(M,3),0);
         for ImgNo=1:ImgSz(end),
