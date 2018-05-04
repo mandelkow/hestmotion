@@ -46,8 +46,11 @@ while (Eant>Eact(niter))&(niter<MAXITER)&(Eact(niter)>eps)
    % solve WLS with the new weights 
    Aw = A.*repmat(w,[1 Ni]);
    bw=((b-A*pant).*w);
-   pact = pant + pinv(Aw)*bw;
-   
+   try % HM!
+       pact = pant + pinv(Aw)*bw;
+   catch
+       warning('Ignoring error in pinv: %s',lasterr());
+   end
    % compute residual and total errors
    r = (b - A*pact);
    Eact(niter)=sum((w.*r).^2)/sum(w.^2);
