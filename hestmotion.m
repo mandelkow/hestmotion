@@ -1,5 +1,5 @@
 function [M,P,Img] = hestmotion(Img,varargin)
-% hEstMotion:**3BR++: Motion correction for 2D/3D image/volumes (affine trafo)...
+% hEstMotion:**3B1R++: Motion correction for 2D/3D image/volumes (affine trafo)...
 %                  using estMotionMulti3() by <david.heeger@nyu.edu>.
 %
 % SYNTAX: [M,P,Img] = hestmotion(Img,[RefImg,]numIiters,Minitial,rotFlag,robustFlag,CB,SC)
@@ -8,6 +8,7 @@ function [M,P,Img] = hestmotion(Img,varargin)
 %            use *multiscale* algorithm with 4 iterations at 1/4 size, 3
 %            iter. at 1/2 size and 2 iter. at full size.
 % Minitial = starting point for optimisation (passed between iterations)
+% Minitial = 0 -> don't pass Minitial between consecutive images.
 % rotFlag = RIGID BODY motion only (no shearing and scaling)
 % M(:,:,n) = Affine trafo matrix for img n
 % P(n,:) = 12 Motion correction parameters (computed from M(:,:,n))
@@ -20,6 +21,7 @@ function [M,P,Img] = hestmotion(Img,varargin)
 %
 % SEE: estMotion2, estMotion3
 
+% AUTH: HM, 07.2012, 3B1: Input Minitial=0/1 to pass M for consec. images.
 % AUTH: HM, 08.2008, 3B: Replace param. MultiScale with numIters= [1 2 3].
 %                        Display P(0,:), in case of only 1 image.
 % AUTH: HM, 04.2006, 2B: Implement DEFAULT.
@@ -28,7 +30,8 @@ function [M,P,Img] = hestmotion(Img,varargin)
 
 DISP = 1;
 % [RefImg,numIters,Minitial,rotFlag,robustFlag,CB,SC]
-DEFAULT = [{Img(:,:,:,1)},{1},{[]},{1},{0},{[]},{[]}];
+% DEFAULT = [{Img(:,:,:,1)},{1},{[]},{1},{0},{[]},{[]}];
+DEFAULT = [{Img(:,:,:,1)},{1},{1},{1},{0},{[]},{[]}];
 if isempty(varargin) || length(varargin{1}) < 2, % No RefImg given.
     varargin = [{[]},varargin];
     ImgNo = 2;
@@ -38,10 +41,12 @@ end
 tmp = find(~cellfun('isempty',varargin));
 DEFAULT(tmp) = varargin(tmp); % Replace defaults by input.
 varargin = DEFAULT;
-clear DEFAULT
+clear DEFAULT % Why?
 [RefImg,numIters,Minitial,rotFlag,robustFlag,CB,SC] = deal(varargin{:});
 varargin(1) = []; % Remove RefImg.
-
+if numel(Minitial)==1,
+    varargin{2} = [];
+end
 if length(numIters) < 2,
     disp(cell2struct(varargin,...
         {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2));
@@ -91,7 +96,9 @@ for ImgNo=ImgNo:ImgSz(end),
     else
         M(:,:,ImgNo) = feval(FUN,RefImg,Img(:,:,:,ImgNo),varargin{:});
     end;
-    if numIters > 1, % *** HM! 2012-07
+    % if numIters > 1, % *** HM! 2012-07 pass Minitial betw. Images?!
+    % Why only with numIters > 1?!
+    if Minitial~=0,
         varargin{2} = M(:,:,ImgNo); % = Minitial
     end;
     fprintf('\b\b\b\b\b%5u',ImgNo);
