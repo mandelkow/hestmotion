@@ -1,8 +1,9 @@
 function [M,P,Img,Fig,Par] = hestmotion(Img,varargin)
-% hEstMotion:**3B3R++: Motion correction for 2D/3D image/volumes (affine trafo)...
+% hEstMotion:**3B5++: Motion correction for 2D/3D image/volumes (affine trafo)...
 %                  using estMotionMulti3() by <david.heeger@nyu.edu>.
 %
-% SYNTAX: [M,P,Img] = hestmotion(Img,[RefImg,]numIiters,Minitial,rotFlag,robustFlag,CB,SC)
+% SYNTAX: [M,P,Img,Fig] = hestmotion(Img,[RefImg,]numIiters,Minitial,rotFlag,robustFlag,CB,SC)
+% SYNTAX: [M,P,~,~,Par] = hestmotion(...) % No text output, Img and Fig
 %
 % numIters = # of iterations default= 1. If vector e.g. [2 3 4],...
 %            use *multiscale* algorithm with 4 iterations at 1/4 size, 3
@@ -27,8 +28,8 @@ function [M,P,Img,Fig,Par] = hestmotion(Img,varargin)
 %
 % SEE: estMotion2, estMotion3
 
+% AUTH: HM, 07.2012, 3B4: Add outputs Fig and Par to suppress display.
 % AUTH: HM, 07.2012, 3B1: Input Minitial=0/1 to pass M for consec. images.
-%                         Add outputs Fig and Par to suppress display.
 % AUTH: HM, 08.2008, 3B: Replace param. MultiScale with numIters= [1 2 3].
 %                        Display P(0,:), in case of only 1 image.
 % AUTH: HM, 04.2006, 2B: Implement DEFAULT.
@@ -37,6 +38,7 @@ function [M,P,Img,Fig,Par] = hestmotion(Img,varargin)
 
 %%
 DISP = 0; % ***
+VERB = 1;
 % [RefImg,numIters,Minitial,rotFlag,robustFlag,CB,SC]
 DEFAULT = [{Img(:,:,:,1)},{1},{1},{1},{0},{[]},{[]}];
 
@@ -57,12 +59,13 @@ varargin(1) = []; % Remove RefImg.
 if isempty(Minitial), Minitial = 1; % (default) pass M betw images
 elseif numel(Minitial)==1, varargin{2} = [];
 end
-if nargout < 5,
-    disp(cell2struct(varargin,...
-        {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2));
-else
-    Par = cell2struct(varargin,...
-        {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2);
+Par = cell2struct(varargin,...
+    {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2);
+if nargout > 4, VERB = 0; end
+if VERB,
+    disp(Par);
+%     disp(cell2struct(varargin,...
+%         {'Iterations','Minitial','RigidFlag','RobustFlag','CB','SC'},2));
 end
 % if length(numIters) < 2,
 %     disp(cell2struct(varargin,...
@@ -102,12 +105,13 @@ FUN = str2func(FUN);
 if isempty(rotFlag) || rotFlag,
     MSG = strrep(MSG,'full affine','rigid-body');
 end;
-fprintf(MSG,ImgSz(end),0);
+if VERB, fprintf(MSG,ImgSz(end),0); end
 if ImgNo > 1,
     M(:,:,1) = eye(size(M,1));
 end;
 wstate = warning('off','hctranspose:complex');
 for ImgNo=ImgNo:ImgSz(end),
+% parfor ImgNo=ImgNo:ImgSz(end), % Minitial must be 0!
     if Flag2D,
         M(:,:,ImgNo) = feval(FUN,RefImg,Img(:,:,ImgNo),varargin{:});
     else
@@ -116,7 +120,7 @@ for ImgNo=ImgNo:ImgSz(end),
     if Minitial~=0,
         varargin{2} = M(:,:,ImgNo); % = Minitial
     end;
-    fprintf('\b\b\b\b\b%5u',ImgNo);
+    if VERB, fprintf('\b\b\b\b\b%5u',ImgNo); end
     if 0,
         subplot(2,1,1)
         plot(ImgNo,M(1,3,ImgNo),'r.');
@@ -126,7 +130,7 @@ for ImgNo=ImgNo:ImgSz(end),
         drawnow;
     end;
 end;
-fprintf(' \t DONE.\n');
+if VERB, fprintf(' \t DONE.\n'); end
 warning(wstate);
 
 %% Disp motion params:
@@ -136,7 +140,8 @@ if DISP || (nargout > 1),
         P(ImgNo,:) = hspm_imatrix(M(:,:,ImgNo));
     end;
 end
-if DISP || (nargout<1) || (nargout<5),
+Fig = [];
+if DISP || (nargout==0) || (nargout==4),
     Fig = figure('name','hestmotion');
     
 %     subplot(2,1,1);% set(gca,'xlim',[1,size(Img,4)]);
@@ -183,19 +188,21 @@ end;
 %% Transform images for output
 if nargout > 2 && nargout < 5,
     if Flag2D,
-        fprintf('\nTransform %u images... %5u',size(M,3),0);
+        if VERB, fprintf('\nTransform %u images... %5u',size(M,3),0); end
         for ImgNo=1:ImgSz(end),
             Img(:,:,ImgNo) = warpAffine2(Img(:,:,ImgNo),M(:,:,ImgNo));
-            fprintf('\b\b\b\b\b%5u',ImgNo);
+            if VERB, fprintf('\b\b\b\b\b%5u',ImgNo); end
         end;
     else
-        fprintf('\nTransform %u volumes... %5u',size(M(:,:,:),3),0);
+        if VERB, fprintf('\nTransform %u volumes... %5u',size(M(:,:,:),3),0); end
         for ImgNo=1:ImgSz(end),
             Img(:,:,:,ImgNo) = warpAffine3(Img(:,:,:,ImgNo),M(:,:,ImgNo));
-            fprintf('\b\b\b\b\b%5u',ImgNo);
+            if VERB, fprintf('\b\b\b\b\b%5u',ImgNo); end
         end;
     end;
-    fprintf(' \t DONE.\n');
+    if VERB, fprintf(' \t DONE.\n'); end
+else
+    Img = [];
 end;
 
 return;
