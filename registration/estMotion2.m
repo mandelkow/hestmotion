@@ -27,16 +27,16 @@ function [M,w2d] = estMotion2(im1,im2,rotFlag,robustFlag,CB,SC)
 %
 
 % default values
-if ~exist('robustFlag')
+if ~exist('robustFlag','var') % HM!
   robustFlag = 0;
 end
-if ~exist('rotFlag')
+if ~exist('rotFlag','var') % HM!
   rotFlag = 1;
 end
-if ~exist('CB')
+if ~exist('CB','var') % HM!
   CB = [];
 end
-if ~exist('SC')
+if ~exist('SC','var') % HM!
   SC = [];
 end
 
@@ -79,13 +79,17 @@ else
 end
 
 if rotFlag
-	M= [cos(p(3))  -sin(p(3)) p(1);
-    	    sin(p(3))  cos(p(3))  p(2);
-    	    0     0    1];
+    if rotFlag == 2, p(3)=0; % HM!
+    % elseif rotFlag ==3, p(1:2) = 0;
+    % Won't work bc tra and rot are not commutative.
+    end
+    M= [cos(p(3))  -sin(p(3)) p(1);
+        sin(p(3))  cos(p(3))  p(2);
+        0          0          1 ];
 else
-	M= [1+p(1) p(2)   p(3);
-    	    p(4)   1+p(5) p(6);
-    	    0      0      1];
+    M= [1+p(1) p(2)   p(3);
+        p(4)   1+p(5) p(6);
+        0      0      1];
 end
 
 return;
