@@ -13,11 +13,11 @@ function result = warpAffine3B(in,A,badVal,B)
 % 10/99, on - added Border parameter to permit nearest neighbor interpolation at the edges
 %
 
-if ~exist('badVal')
+if ~exist('badVal','var') % HM!
   badVal=NaN;
 end
 
-if ~exist('B')
+if ~exist('B','var') % HM!
   B = 0;
 end
 

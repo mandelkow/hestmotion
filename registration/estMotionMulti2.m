@@ -25,25 +25,25 @@ function M = estMotionMulti2(im1,im2,iters,Minitial,rotFlag,robustFlag,CB,SC)
 %                    specification of not doing finest scales.
 
 % default values
-if ~exist('robustFlag')
+if ~exist('robustFlag','var') % HM!
   robustFlag = 0;
 end
-if ~exist('rotFlag')
+if ~exist('rotFlag','var') % HM!
   rotFlag = 1;
 end
-if ~exist('CB')
+if ~exist('CB','var') % HM!
   CB = [];
 end
-if ~exist('SC')
+if ~exist('SC','var') % HM!
   SC = [];
 end
 
-if ~exist('iters')
+if ~exist('iters','var') % HM!
   iters=[3];
 elseif isempty(iters)
   iters=[3];
 end
-if ~exist('Minitial')
+if ~exist('Minitial','var') % HM!
   Minitial=eye(3);
 elseif isempty(Minitial)
   Minitial=eye(3);

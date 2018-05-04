@@ -11,7 +11,7 @@ function res = reduce(im,bfilt)
 % res is 1/2 the size of im.  Fills NaNs for invalid pixels near
 % edges.
 
-if ~exist('bfilt')
+if ~exist('bfilt','var') % HM!
   bfilt=[.0625 .25 .375 .25 .0625]';
 end
 

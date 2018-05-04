@@ -17,26 +17,26 @@ function M = estMotionIter2(im1,im2,numIters,Minitial,rotFlag,robustFlag,CB,SC)
 %
 
 % default values
-if ~exist('robustFlag')
+if ~exist('robustFlag','var') % HM! add 'var'
   robustFlag = 0;
 end
-if ~exist('rotFlag')
+if ~exist('rotFlag','var') % HM!
   rotFlag = 1;
 end
-if ~exist('CB')
+if ~exist('CB','var') % HM!
   CB = [];
 end
-if ~exist('SC')
+if ~exist('SC','var') % HM!
   SC = [];
 end
 
-if ~exist('numIters')
+if ~exist('numIters','var') % HM!
   numIters=3;
 elseif isempty(numIters)
   numIters=3;
 end
 
-if ~exist('Minitial')
+if ~exist('Minitial','var')
   M=estMotion2(im1,im2,rotFlag,robustFlag,CB,SC);
 elseif isempty(Minitial)
   M=estMotion2(im1,im2,rotFlag,robustFlag,CB,SC);

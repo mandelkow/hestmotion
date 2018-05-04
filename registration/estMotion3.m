@@ -27,16 +27,16 @@ function [M,w3d] = estMotion3(vol1,vol2,rotFlag,robustFlag,CB,SC)
 %
 
 % default values
-if ~exist('robustFlag')
+if ~exist('robustFlag','var') % HM!
   robustFlag = 0;
 end
-if ~exist('rotFlag')
+if ~exist('rotFlag','var') % HM!
   rotFlag = 1;
 end
-if ~exist('CB')
+if ~exist('CB','var') % HM!
   CB = [];
 end
-if ~exist('SC')
+if ~exist('SC','var') % HM!
   SC = [];
 end
 
