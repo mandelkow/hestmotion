@@ -27,6 +27,8 @@ function [M,P,Img,Fig,Par] = hestmotion(Img,varargin)
 %       multiscale (initial downsampling) for large images.
 %
 % SEE: estMotion2, estMotion3
+%
+% AUTHOR: Hendrik.Mandelkow@gmail.com
 
 % AUTH: HM, 07.2012, 3B4: Add outputs Fig and Par to suppress display.
 % AUTH: HM, 07.2012, 3B1: Input Minitial=0/1 to pass M for consec. images.
