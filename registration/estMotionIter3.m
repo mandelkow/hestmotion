@@ -1,4 +1,5 @@
-function M = estMotionIter3(vol1,vol2,numIters,Minitial,rotFlag,robustFlag,CB,SC)
+function M = estMotionIter3(vol1,vol2,varargin)
+%function M = estMotionIter3(vol1,vol2,numIters,Minitial,rotFlag,robustFlag,CB,SC)
 %
 % function M = estMotionIter3(vol1,vol2,numIters,Minitial,rotFlag,robustFlag)
 %
@@ -19,33 +20,13 @@ function M = estMotionIter3(vol1,vol2,numIters,Minitial,rotFlag,robustFlag,CB,SC
 % robustFlag is passed to estMotion3 (if activated, uses robust M-estimator)
 %
 
-% default values
-if ~exist('robustFlag')
-  robustFlag = 0;
-end
-if ~exist('rotFlag')
-  rotFlag = 1;
-end
-if ~exist('CB')
-  CB = [];
-end
-if ~exist('SC')
-  SC = [];
-end
+%% default values
+% [numIters,Minitial,rotFlag,robustFlag,CB,SC]
+DEFAULT = { 3, eye(4), true, false, [], []};
+n = find(~cellfun(@isempty,varargin));  % find given inputs
+DEFAULT(n) = varargin(n); % overwrite defaults
+[numIters,M,rotFlag,robustFlag,CB,SC] = deal(DEFAULT{:});
 
-if ~exist('numIters')
-  numIters=3;
-elseif isempty(numIters)
-  numIters=3;
-end
-
-if ~exist('Minitial')
-  M=eye(4);
-elseif isempty(Minitial)
-  M=eye(4);
-else
-  M=Minitial;
-end
 %disp(['iter=0']);
 %disp(M);
 
